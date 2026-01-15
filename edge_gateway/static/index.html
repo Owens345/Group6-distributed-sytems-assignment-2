@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Edge · Core · Cloud Demo Console</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#0f1730;
+      --panel2:#111b38;
+      --text:#e8eeff;
+      --muted:#a9b4d6;
+      --border:rgba(255,255,255,.12);
+      --ok:#23c55e;
+      --bad:#ef4444;
+      --warn:#f59e0b;
+      --btn:#1f2a4d;
+      --btn2:#22335f;
+      --accent:#7c9cff;
+      --code:#0a0f1f;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 20% 0%, rgba(124,156,255,.18), transparent 60%),
+                  radial-gradient(1200px 700px at 80% 10%, rgba(35,197,94,.12), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{
+      padding:18px 18px 10px;
+      border-bottom:1px solid var(--border);
+      position:sticky; top:0;
+      backdrop-filter: blur(10px);
+      background: rgba(11,16,32,.7);
+      z-index:10;
+    }
+    .wrap{max-width:1100px; margin:0 auto;}
+    h1{margin:0; font-size:18px; font-weight:700; letter-spacing:.2px}
+    .sub{margin-top:6px; color:var(--muted); font-size:13px; line-height:1.35}
+    .topbar{
+      margin-top:10px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .pills{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border:1px solid var(--border);
+      border-radius:999px;
+      background: rgba(255,255,255,.04);
+      font-size:12px;
+      user-select:none;
+    }
+    .dot{
+      width:9px; height:9px;
+      border-radius:50%;
+      background: var(--warn);
+      box-shadow: 0 0 0 3px rgba(245,158,11,.15);
+    }
+    .dot.ok{ background: var(--ok); box-shadow: 0 0 0 3px rgba(35,197,94,.15); }
+    .dot.bad{ background: var(--bad); box-shadow: 0 0 0 3px rgba(239,68,68,.15); }
+
+    .btnrow{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+    button{
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+      border:1px solid var(--border);
+      color:var(--text);
+      border-radius:12px;
+      padding:9px 12px;
+      font-weight:600;
+      cursor:pointer;
+      transition: transform .04s ease, background .15s ease, border-color .15s ease;
+    }
+    button:hover{ background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.22); }
+    button:active{ transform: translateY(1px); }
+    button.primary{
+      background: linear-gradient(180deg, rgba(124,156,255,.28), rgba(124,156,255,.08));
+      border-color: rgba(124,156,255,.45);
+    }
+    button.danger{
+      background: linear-gradient(180deg, rgba(239,68,68,.20), rgba(239,68,68,.06));
+      border-color: rgba(239,68,68,.35);
+    }
+    button.ghost{
+      background: transparent;
+    }
+
+    main{padding:16px 18px 30px;}
+    .grid{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:14px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr;}
+    }
+    .card{
+      border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border-radius:16px;
+      padding:14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    .card h2{
+      margin:0 0 10px 0;
+      font-size:14px;
+      letter-spacing:.2px;
+    }
+    .muted{color:var(--muted); font-size:12px; line-height:1.4}
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    label{
+      font-size:12px;
+      color:var(--muted);
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width: 140px;
+    }
+    input, select{
+      background: rgba(255,255,255,.05);
+      border:1px solid var(--border);
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 10px;
+      outline:none;
+      min-width: 160px;
+    }
+    input:focus, select:focus{ border-color: rgba(124,156,255,.5); box-shadow: 0 0 0 3px rgba(124,156,255,.15); }
+    .split{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 640px){
+      .split{grid-template-columns:1fr;}
+      label{min-width: unset}
+      input, select{min-width: unset; width: 100%}
+    }
+
+    .tabs{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin: 8px 0 10px;
+    }
+    .tab{
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .tab.active{
+      border-color: rgba(124,156,255,.55);
+      background: rgba(124,156,255,.12);
+    }
+
+    pre{
+      margin: 10px 0 0;
+      background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.22));
+      border:1px solid rgba(255,255,255,.10);
+      color: #d8e1ff;
+      padding: 10px 12px;
+      border-radius: 14px;
+      overflow:auto;
+      max-height: 360px;
+      font-size: 12px;
+      line-height: 1.35;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .mini{
+      font-size:11px;
+      color: var(--muted);
+      margin-top:8px;
+    }
+    .kpi{
+      display:flex; gap:10px; flex-wrap:wrap; margin-top:10px
+    }
+    .kpi .box{
+      flex: 1;
+      min-width: 140px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      border-radius:14px;
+      padding:10px;
+    }
+    .kpi .big{font-size:16px; font-weight:800}
+    .kpi .small{font-size:11px; color:var(--muted); margin-top:4px}
+    .links{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .links a{
+      padding:8px 10px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background: rgba(255,255,255,.03);
+      font-size:12px;
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="wrap">
+    <h1>Edge · Core · Cloud Demo Console</h1>
+    <div class="sub">
+      Built for a clean live demo. RPC, distributed shared memory (DSM), 2PC and 3PC, event ordering, fault injection, deadlock demo, Byzantine rejection, plus Prometheus/Grafana metrics.
+    </div>
+
+    <div class="topbar">
+      <div class="pills">
+        <span class="pill"><span class="dot" id="dotEdge"></span>Edge</span>
+        <span class="pill"><span class="dot" id="dotSM"></span>Session Manager</span>
+        <span class="pill"><span class="dot" id="dotRM"></span>Resource Manager</span>
+        <span class="pill"><span class="dot" id="dotBS"></span>Billing</span>
+        <span class="pill"><span class="dot" id="dotAN"></span>Analytics</span>
+      </div>
+
+      <div class="btnrow">
+        <button class="ghost" onclick="clearOutput()">Clear Output</button>
+        <button class="primary" onclick="refreshStatus()">Refresh Status</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="grid">
+      <!-- Left column: actions -->
+      <section class="card">
+        <h2>Actions</h2>
+
+        <div class="tabs">
+          <div class="tab active" id="tabSessions" onclick="setTab('sessions')">Sessions</div>
+          <div class="tab" id="tabFaults" onclick="setTab('faults')">Faults</div>
+          <div class="tab" id="tabDemos" onclick="setTab('demos')">Demos</div>
+          <div class="tab" id="tabMetrics" onclick="setTab('metrics')">Metrics</div>
+        </div>
+
+        <!-- Sessions panel -->
+        <div id="panelSessions">
+          <div class="split">
+            <label>
+              Subscriber ID
+              <input id="subId" value="sub_demo" placeholder="e.g. sub_demo" />
+            </label>
+
+            <label>
+              Traffic class
+              <select id="trafficClass">
+                <option value="VOICE">VOICE (priority)</option>
+                <option value="DATA">DATA (best effort)</option>
+              </select>
+            </label>
+
+            <label>
+              Protocol
+              <select id="protocol">
+                <option value="2pc">2PC</option>
+                <option value="3pc">3PC</option>
+              </select>
+            </label>
+
+            <label>
+              Resources
+              <input id="resources" type="number" min="1" value="1" />
+            </label>
+          </div>
+
+          <div class="row" style="margin-top:12px">
+            <button class="primary" onclick="startSession()">Start Session</button>
+            <button onclick="listSessions()">List Sessions</button>
+            <button onclick="loadTest()">Run Load Test</button>
+          </div>
+
+          <div class="mini">
+            Tip. Use VOICE + DATA sessions to show scheduling impact. Use 3PC to show extra phase and latency tradeoff.
+          </div>
+        </div>
+
+        <!-- Faults panel -->
+        <div id="panelFaults" style="display:none">
+          <div class="split">
+            <label>
+              Slow participant (ms)
+              <input id="slowMs" type="number" min="0" value="0" />
+            </label>
+            <label>
+              Fail prepare (%)
+              <input id="failPct" type="number" min="0" max="100" value="0" />
+            </label>
+          </div>
+
+          <div class="row" style="margin-top:12px">
+            <button class="primary" onclick="applyFaults()">Apply Faults</button>
+            <button class="danger" onclick="resetFaults()">Reset Faults</button>
+          </div>
+
+          <div class="mini">
+            Slow ms adds artificial delay. Fail prepare makes participants reject during prepare, triggering abort in 2PC or 3PC.
+          </div>
+        </div>
+
+        <!-- Demos panel -->
+        <div id="panelDemos" style="display:none">
+          <div class="row">
+            <button onclick="deadlockDemo()">Deadlock Demo</button>
+            <button onclick="byzantineDemo()">Byzantine Demo</button>
+            <button onclick="refreshStatus()">Refresh Status</button>
+          </div>
+
+          <div class="mini">
+            Byzantine Demo expects an Edge endpoint at <code>/api/demo/byzantine</code>. If you haven’t added it yet, the UI will show a clear error.
+          </div>
+        </div>
+
+        <!-- Metrics panel -->
+        <div id="panelMetrics" style="display:none">
+          <div class="links">
+            <a href="/metrics" target="_blank">Edge /metrics</a>
+            <a href="http://localhost:8001/metrics" target="_blank">SM1 /metrics</a>
+            <a href="http://localhost:8005/metrics" target="_blank">SM2 /metrics</a>
+            <a href="http://localhost:8002/metrics" target="_blank">Resource /metrics</a>
+            <a href="http://localhost:8003/metrics" target="_blank">Billing /metrics</a>
+            <a href="http://localhost:8004/metrics" target="_blank">Analytics /metrics</a>
+            <a href="http://localhost:9090" target="_blank">Prometheus</a>
+            <a href="http://localhost:3000" target="_blank">Grafana</a>
+          </div>
+
+          <div class="mini">
+            Presentation move. Run a load test, then open Grafana to show request latency, commit vs abort counts, and leader gauge.
+          </div>
+        </div>
+
+        <pre id="outMain">{ "ready": true }</pre>
+      </section>
+
+      <!-- Right column: status + quick KPIs -->
+      <aside class="card">
+        <h2>System Status</h2>
+        <div class="muted">
+          This pulls <code>/api/demo/status</code> from Edge. It’s your “everything is alive” check.
+        </div>
+
+        <div class="kpi">
+          <div class="box">
+            <div class="big" id="kpiLeader">–</div>
+            <div class="small">Leader instance (SM)</div>
+          </div>
+          <div class="box">
+            <div class="big" id="kpiProto">–</div>
+            <div class="small">Selected protocol</div>
+          </div>
+          <div class="box">
+            <div class="big" id="kpiClass">–</div>
+            <div class="small">Traffic class</div>
+          </div>
+        </div>
+
+        <pre id="outStatus">Loading…</pre>
+
+        <div class="mini">
+          If you ever see 500. Check Edge logs for ReadTimeout. Then increase Edge timeouts or reduce load concurrency.
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<script>
+  // ---------- helpers ----------
+  function $(id){ return document.getElementById(id); }
+
+  function setDot(dotId, state){ // state: "ok" | "bad" | "warn"
+    const el = $(dotId);
+    el.classList.remove("ok","bad");
+    if(state === "ok") el.classList.add("ok");
+    if(state === "bad") el.classList.add("bad");
+  }
+
+  async function j(url, opts){
+    try{
+      const r = await fetch(url, opts);
+      const t = await r.text();
+      try{ return { status: r.status, body: JSON.parse(t) }; }
+      catch{ return { status: r.status, body: t }; }
+    }catch(e){
+      return { status: 0, body: { error: String(e) } };
+    }
+  }
+
+  function pretty(x){
+    try{ return JSON.stringify(x, null, 2); }
+    catch{ return String(x); }
+  }
+
+  function showOutput(obj){
+    $("outMain").textContent = pretty(obj);
+  }
+
+  function clearOutput() {
+    const el = document.getElementById("outMain");
+    if (el) el.textContent = "{ }";
+  }
+
+
+  function setTab(which){
+    const tabs = ["sessions","faults","demos","metrics"];
+    for(const t of tabs){
+      $("tab" + t[0].toUpperCase() + t.slice(1)).classList.toggle("active", t === which);
+      $("panel" + t[0].toUpperCase() + t.slice(1)).style.display = (t === which) ? "block" : "none";
+    }
+  }
+
+  // ---------- API actions ----------
+  async function refreshStatus(){
+    const res = await j("/api/demo/status");
+    $("outStatus").textContent = pretty(res.body);
+
+    setDot("dotEdge", "ok");
+
+    const smOk = res.body?.session_manager?.[0] === 200;
+    const rmOk = res.body?.resource_manager?.[0] === 200;
+    const bsOk = res.body?.billing_service?.[0] === 200;
+    const anOk = res.body?.analytics_service?.[0] === 200;
+
+    setDot("dotSM", smOk ? "ok" : "bad");
+    setDot("dotRM", rmOk ? "ok" : "bad");
+    setDot("dotBS", bsOk ? "ok" : "bad");
+    setDot("dotAN", anOk ? "ok" : "bad");
+
+    // KPIs
+    const proto = $("protocol").value;
+    const cls = $("trafficClass").value;
+    $("kpiProto").textContent = proto.toUpperCase();
+    $("kpiClass").textContent = cls;
+
+    // Try to extract leader if present in /status payload (Session Manager returns {leader, instance_id})
+    // Edge returns [status_code, json] for each service.
+    let leaderLabel = "–";
+    if(smOk){
+      const smBody = res.body.session_manager?.[1];
+      if(smBody && typeof smBody === "object"){
+        if(smBody.leader === true) leaderLabel = `${smBody.instance_id} (this node)`;
+        else if(smBody.leader === false) leaderLabel = "another node";
+        // If you later extend status to include leader_id, show it here.
+        if(smBody.leader_id) leaderLabel = smBody.leader_id;
+      }
+    }
+    $("kpiLeader").textContent = leaderLabel;
+    return res;
+  }
+
+  async function startSession(){
+    const subscriber_id = $("subId").value.trim();
+    const protocol = $("protocol").value;
+    const traffic_class = $("trafficClass").value;
+    const resources = Number($("resources").value || 1);
+
+    const res = await j("/api/sessions/start", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ subscriber_id, resources, protocol, traffic_class })
+    });
+    showOutput({ action:"start_session", request:{ subscriber_id, resources, protocol, traffic_class }, response: res });
+    await refreshStatus();
+  }
+
+  async function listSessions(){
+    const res = await j("/api/sessions");
+    showOutput({ action:"list_sessions", response: res });
+    await refreshStatus();
+  }
+
+  async function loadTest(){
+    const protocol = $("protocol").value;
+    const traffic_class = $("trafficClass").value;
+
+    // Keep these moderate for reliability during presentations
+    const payload = { n: 60, concurrency: 12, protocol, traffic_class };
+
+    const res = await j("/api/demo/load", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    });
+    showOutput({ action:"load_test", request: payload, response: res });
+    await refreshStatus();
+  }
+
+  async function applyFaults(){
+    const slow_ms = Number($("slowMs").value || 0);
+    const fail_prepare_pct = Number($("failPct").value || 0);
+
+    const payload = {
+      session_manager: { slow_ms, random_abort_pct: 0 },
+      resource_manager: { slow_ms, fail_prepare_pct },
+      billing_service: { slow_ms, fail_prepare_pct }
+    };
+
+    const res = await j("/api/demo/faults", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    showOutput({ action:"apply_faults", request: payload, response: res });
+    await refreshStatus();
+  }
+
+  async function resetFaults(){
+    $("slowMs").value = 0;
+    $("failPct").value = 0;
+    await applyFaults();
+  }
+
+  async function deadlockDemo(){
+    const res = await j("/api/demo/deadlock", { method:"POST" });
+    showOutput({ action:"deadlock_demo", response: res });
+    await refreshStatus();
+  }
+
+  async function byzantineDemo(){
+    // Preferred: an Edge endpoint that intentionally sends a bad signature to a core service.
+    // If you haven't added it yet, you'll see a clean error here.
+    const res = await j("/api/demo/byzantine", { method:"POST" });
+    showOutput({ action:"byzantine_demo", response: res });
+    await refreshStatus();
+  }
+
+  // boot
+  refreshStatus();
+</script>
+</body>
+</html>
+

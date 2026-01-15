@@ -1,0 +1,80 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  session_manager_1:
+    build: { context: ., dockerfile: session_manager/Dockerfile }
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      HMAC_SECRET: change-me-demo-secret
+      RESOURCE_MANAGER_URL: http://resource_manager:8002
+      BILLING_SERVICE_URL: http://billing_service:8003
+      INSTANCE_ID: sm1
+    ports: ["8001:8001"]
+    depends_on: [redis]
+
+  session_manager_2:
+    build: { context: ., dockerfile: session_manager/Dockerfile }
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      HMAC_SECRET: change-me-demo-secret
+      RESOURCE_MANAGER_URL: http://resource_manager:8002
+      BILLING_SERVICE_URL: http://billing_service:8003
+      INSTANCE_ID: sm2
+    ports: ["8005:8001"]
+    depends_on: [redis]
+
+  resource_manager:
+    build: { context: ., dockerfile: resource_manager/Dockerfile }
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      HMAC_SECRET: change-me-demo-secret
+    ports: ["8002:8002"]
+    depends_on: [redis]
+
+  billing_service:
+    build: { context: ., dockerfile: billing_service/Dockerfile }
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      HMAC_SECRET: change-me-demo-secret
+    ports: ["8003:8003"]
+    depends_on: [redis]
+
+  analytics_service:
+    build: { context: ., dockerfile: analytics_service/Dockerfile }
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    ports: ["8004:8004"]
+    depends_on: [redis]
+
+  edge_gateway:
+    build: { context: ., dockerfile: edge_gateway/Dockerfile }
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      HMAC_SECRET: change-me-demo-secret
+      SESSION_MANAGER_URL: http://session_manager_1:8001
+      SESSION_MANAGER_URL_2: http://session_manager_2:8001
+      RESOURCE_MANAGER_URL: http://resource_manager:8002
+      BILLING_SERVICE_URL: http://billing_service:8003
+      ANALYTICS_SERVICE_URL: http://analytics_service:8004
+    ports: ["8000:8000"]
+    depends_on: [session_manager_1, session_manager_2, resource_manager, billing_service, analytics_service]
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports: ["9090:9090"]
+    depends_on: [edge_gateway]
+
+  grafana:
+    image: grafana/grafana:11.1.4
+    ports: ["3000:3000"]
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    depends_on: [prometheus]
