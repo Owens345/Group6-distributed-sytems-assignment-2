@@ -1,4 +1,4 @@
-# Carrier Grade Edge.Core.Cloud Demo System (Presentation Friendly)
+# Carrier Grade Edge.Core.Cloud Demo System
 
 This repo is a working multi service prototype that demonstrates:
 - Edge.Core.Cloud placement and flows
